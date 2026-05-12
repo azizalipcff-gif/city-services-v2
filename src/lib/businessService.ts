@@ -52,6 +52,7 @@ export const businessService = {
   // Get all public businesses (approved and verified)
   async getPublic(filters?: { category?: string; city?: string; search?: string }) {
     try {
+      console.log('Fetching public businesses...');
       let query = supabase
         .from('businesses')
         .select('*')
@@ -72,9 +73,19 @@ export const businessService = {
 
       const { data, error } = await query.order('rating', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase getPublic error:', error);
+        // Check for RLS issues
+        if (error.code === '42501') {
+          console.error('RLS policy violation - check policies on businesses table');
+        }
+        throw error;
+      }
+
+      console.log('Successfully fetched public businesses:', data?.length || 0);
       return { data, error: null };
     } catch (error) {
+      console.error('getPublic error:', error);
       return { data: null, error };
     }
   },
@@ -481,14 +492,25 @@ export const adminService = {
   // Get all businesses
   async getAllBusinesses() {
     try {
+      console.log('Fetching all businesses...');
       const { data, error } = await supabase
         .from('businesses')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase getAllBusinesses error:', error);
+        // Check for RLS issues
+        if (error.code === '42501') {
+          console.error('RLS policy violation - check policies on businesses table');
+        }
+        throw error;
+      }
+
+      console.log('Successfully fetched businesses:', data?.length || 0);
       return { data, error: null };
     } catch (error) {
+      console.error('getAllBusinesses error:', error);
       return { data: null, error };
     }
   },

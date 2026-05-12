@@ -9,14 +9,30 @@ const FeaturedBusinesses = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchFeatured = async () => {
-      const { data } = await businessService.getFeatured(6);
-      if (data) {
-        setBusinesses(data);
+    const fetchBusinesses = async () => {
+      try {
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout')), 10000)
+        );
+        
+        const fetchPromise = businessService.getPublic();
+        
+        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+        
+        if (error) {
+          console.error('Error fetching businesses:', error);
+        } else if (data) {
+          console.log('Fetched businesses for home:', data.length);
+          setBusinesses(data.slice(0, 6));
+        }
+      } catch (error) {
+        console.error('Fetch error:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-    fetchFeatured();
+    fetchBusinesses();
   }, []);
 
   const renderStars = (rating: number) => {

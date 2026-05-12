@@ -10,6 +10,7 @@ import UserDashboard from './pages/UserDashboard';
 import BusinessDashboard from './pages/BusinessDashboard';
 import BusinessDetails from './pages/BusinessDetails';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminControl from './pages/AdminControl';
 import SearchResults from './pages/SearchResults';
 import ProtectedRoute from './components/ProtectedRoute';
 import BottomNav from './components/BottomNav';
@@ -34,6 +35,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin-control"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminControl />
                   </ProtectedRoute>
                 }
               />
