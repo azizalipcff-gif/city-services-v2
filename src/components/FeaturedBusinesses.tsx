@@ -1,11 +1,24 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Star, MapPin, MessageCircle, CheckCircle, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { featuredBusinesses } from '../data/mockData';
-
-const businesses = featuredBusinesses;
+import { businessService } from '../lib/businessService';
 
 const FeaturedBusinesses = () => {
+  const [businesses, setBusinesses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      const { data } = await businessService.getFeatured(6);
+      if (data) {
+        setBusinesses(data);
+      }
+      setLoading(false);
+    };
+    fetchFeatured();
+  }, []);
+
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
@@ -14,6 +27,32 @@ const FeaturedBusinesses = () => {
       />
     ));
   };
+
+  if (loading) {
+    return (
+      <section className="py-20 bg-gradient-to-br from-[#071126] to-[#0a1a2e]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-white mb-4">Featured Businesses</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">Loading featured businesses...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (businesses.length === 0) {
+    return (
+      <section className="py-20 bg-gradient-to-br from-[#071126] to-[#0a1a2e]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-white mb-4">Featured Businesses</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">No featured businesses available yet.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="businesses" className="py-20 bg-gradient-to-br from-[#071126] to-[#0a1a2e]">
