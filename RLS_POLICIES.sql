@@ -16,10 +16,10 @@ DROP POLICY IF EXISTS "Business owners can delete their own businesses" ON busin
 
 -- 3. Create proper RLS policies
 
--- Public can only view approved AND verified businesses
+-- Public can only view approved businesses (verified is optional, rejected are hidden)
 CREATE POLICY "Public can view approved businesses" ON businesses
   FOR SELECT USING (
-    approved = true AND verified = true
+    approved = true AND (rejected IS NULL OR rejected = false)
   );
 
 -- Business owners can view all their own businesses (including pending)

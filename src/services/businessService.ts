@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
-import type { Business } from './types';
+import { notificationService } from './notificationService';
+import type { Business } from '../types';
 
 // BUSINESS CRUD OPERATIONS
 export const businessService = {
@@ -11,12 +12,18 @@ export const businessService = {
         .insert({
           ...business,
           owner_id: userId,
-          approved: false, // New businesses require admin approval
+          approved: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // Send notification for business submission
+      await notificationService.notifyBusinessSubmission(business.name, data.id, userId);
+
       return { data, error: null };
     } catch (error) {
       return { data: null, error };
@@ -49,13 +56,13 @@ export const businessService = {
     }
   },
 
-  // Get all public businesses (approved and verified)
+  // Get all public businesses (approved and verified) - Optimized with selective fields
   async getPublic(filters?: { category?: string; city?: string; search?: string }) {
     try {
       console.log('Fetching public businesses...');
       let query = supabase
         .from('businesses')
-        .select('*')
+        .select('id, name, slug, category, city, rating, reviews_count, logo_url, address, verified, featured, shortDescription')
         .eq('approved', true)
         .eq('verified', true);
 
@@ -67,15 +74,14 @@ export const businessService = {
       }
       if (filters?.search) {
         query = query.or(
-          `name.ilike.%${filters.search}%,description.ilike.%${filters.search}%,category.ilike.%${filters.search}%`
+          `name.ilike.%${filters.search}%,shortDescription.ilike.%${filters.search}%,category.ilike.%${filters.search}%`
         );
       }
 
-      const { data, error } = await query.order('rating', { ascending: false });
+      const { data, error } = await query.order('rating', { ascending: false }).limit(50);
 
       if (error) {
         console.error('Supabase getPublic error:', error);
-        // Check for RLS issues
         if (error.code === '42501') {
           console.error('RLS policy violation - check policies on businesses table');
         }
@@ -161,16 +167,16 @@ export const businessService = {
     }
   },
 
-  // Search businesses
+  // Search businesses - Optimized with selective fields and limit
   async search(query: string, city?: string) {
     try {
       let searchQuery = supabase
         .from('businesses')
-        .select('*')
+        .select('id, name, slug, category, city, rating, reviews_count, logo_url, address, shortDescription')
         .eq('approved', true)
         .eq('verified', true)
         .or(
-          `name.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%,address.ilike.%${query}%`
+          `name.ilike.%${query}%,shortDescription.ilike.%${query}%,category.ilike.%${query}%,address.ilike.%${query}%`
         );
 
       if (city) {
@@ -182,6 +188,54 @@ export const businessService = {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  // Get search suggestions
+  async getSearchSuggestions(query: string) {
+    try {
+      if (query.length < 2) {
+        return { data: [], error: null };
+      }
+
+      // Get businesses for name and description suggestions
+      const { data: businesses } = await this.search(query);
+      
+      // Get all businesses for categories and cities
+      const { data: allBusinesses } = await this.getPublic();
+      
+      // Get unique categories that match
+      const categories = [...new Set(allBusinesses?.map((business: any) => business.category) || [])]
+        .filter((cat: string) => cat.toLowerCase().includes(query.toLowerCase()))
+        .slice(0, 5)
+        .map((cat: string) => ({
+          id: cat,
+          name: cat,
+          category: cat,
+          city: '',
+          description: `Browse ${cat} services`,
+          rating: 0,
+          type: 'category'
+        }));
+
+      // Get unique cities that match (including Moroccan cities)
+      const cities = [...new Set(allBusinesses?.map((business: any) => business.city) || [])]
+        .filter((city: string) => city.toLowerCase().includes(query.toLowerCase()))
+        .slice(0, 5)
+        .map((city: string) => ({
+          id: city,
+          name: city,
+          category: '',
+          city: city,
+          description: `Services in ${city}`,
+          rating: 0,
+          type: 'city'
+        }));
+
+      return { data: [...businesses, ...categories, ...cities], error: null };
+    } catch (error) {
+      console.error('getSearchSuggestions error:', error);
       return { data: null, error };
     }
   },
@@ -227,6 +281,50 @@ export const businessService = {
       return { data: null, error };
     }
   },
+
+  // Get nearby businesses by coordinates
+  async getNearby(lat: number, lng: number, radiusKm: number = 10) {
+    try {
+      // Haversine formula to calculate distance
+      const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+        const R = 6371; // Earth's radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+      };
+
+      const { data: allBusinesses, error } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('approved', true)
+        .eq('verified', true);
+
+      if (error) throw error;
+
+      const nearbyBusinesses = allBusinesses?.filter((business: any) => {
+        if (!business.coordinates_lat || !business.coordinates_lng) return false;
+        const distance = calculateDistance(
+          lat,
+          lng,
+          business.coordinates_lat,
+          business.coordinates_lng
+        );
+        return distance <= radiusKm;
+      }).map((business: any) => ({
+        ...business,
+        distance: calculateDistance(lat, lng, business.coordinates_lat, business.coordinates_lng)
+      })).sort((a: any, b: any) => a.distance - b.distance);
+
+      return { data: nearbyBusinesses, error: null };
+    } catch (error) {
+      console.error('Get nearby businesses error:', error);
+      return { data: null, error };
+    }
+  },
 };
 
 // REVIEW OPERATIONS
@@ -249,6 +347,25 @@ export const reviewService = {
 
       // Update business rating
       await this.updateBusinessRating(businessId);
+
+      // Get business details for notification
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('name, owner_id')
+        .eq('id', businessId)
+        .single();
+
+      if (business) {
+        // Get reviewer name
+        const { data: user } = await supabase
+          .from('users')
+          .select('name')
+          .eq('id', userId)
+          .single();
+
+        const reviewerName = user?.name || 'A user';
+        await notificationService.notifyReview(business.name, businessId, business.owner_id, rating, reviewerName);
+      }
 
       return { data, error: null };
     } catch (error) {
@@ -299,6 +416,79 @@ export const reviewService = {
       }
     } catch (error) {
       console.error('Error updating business rating:', error);
+    }
+  },
+
+  // Update review
+  async update(reviewId: string, rating: number, comment: string) {
+    try {
+      const { data: review, error } = await supabase
+        .from('reviews')
+        .select('business_id')
+        .eq('id', reviewId)
+        .single();
+
+      if (error) throw error;
+
+      const { data, error: updateError } = await supabase
+        .from('reviews')
+        .update({ rating, comment })
+        .eq('id', reviewId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      // Update business rating
+      await this.updateBusinessRating(review.business_id);
+
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  // Delete review
+  async delete(reviewId: string) {
+    try {
+      const { data: review, error } = await supabase
+        .from('reviews')
+        .select('business_id')
+        .eq('id', reviewId)
+        .single();
+
+      if (error) throw error;
+
+      const { error: deleteError } = await supabase
+        .from('reviews')
+        .delete()
+        .eq('id', reviewId);
+
+      if (deleteError) throw deleteError;
+
+      // Update business rating
+      await this.updateBusinessRating(review.business_id);
+
+      return { data: { success: true }, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  // Get user's review for a business
+  async getUserReview(businessId: string, userId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('business_id', businessId)
+        .eq('user_id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "not found"
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error };
     }
   },
 };
@@ -382,22 +572,38 @@ export const adminService = {
   // Get pending businesses
   async getPending() {
     try {
+      // Check if Supabase is configured
+      if (!supabase) {
+        console.warn('Supabase not configured, returning empty pending businesses');
+        return { data: [], error: null };
+      }
+
       const { data, error } = await supabase
         .from('businesses')
         .select('*')
         .eq('approved', false)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Get pending businesses error:', error);
+        return { data: [], error: null };
+      }
       return { data, error: null };
     } catch (error) {
-      return { data: null, error };
+      console.error('Get pending businesses error:', error);
+      return { data: [], error: null };
     }
   },
 
   // Approve business
   async approve(businessId: string) {
     try {
+      // Check if Supabase is configured
+      if (!supabase) {
+        console.warn('Supabase not configured, cannot approve business');
+        return { data: null, error: new Error('Supabase not configured') };
+      }
+
       const { data, error } = await supabase
         .from('businesses')
         .update({ approved: true })
@@ -405,21 +611,48 @@ export const adminService = {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Approve business error:', error);
+        return { data: null, error };
+      }
+
+      // Send notification for approval
+      await notificationService.notifyApproval(data.name, businessId, data.owner_id);
+
       return { data, error: null };
     } catch (error) {
+      console.error('Approve business error:', error);
       return { data: null, error };
     }
   },
 
-  // Reject business
+  // Reject business (mark as rejected instead of deleting)
   async reject(businessId: string) {
     try {
-      const { error } = await supabase.from('businesses').delete().eq('id', businessId);
+      // Check if Supabase is configured
+      if (!supabase) {
+        console.warn('Supabase not configured, cannot reject business');
+        return { data: null, error: new Error('Supabase not configured') };
+      }
 
-      if (error) throw error;
-      return { data: { success: true }, error: null };
+      const { data, error } = await supabase
+        .from('businesses')
+        .update({ approved: false, rejected: true, rejected_at: new Date().toISOString() })
+        .eq('id', businessId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Reject business error:', error);
+        return { data: null, error };
+      }
+
+      // Send notification for rejection
+      await notificationService.notifyRejection(data.name, businessId, data.owner_id);
+
+      return { data, error: null };
     } catch (error) {
+      console.error('Reject business error:', error);
       return { data: null, error };
     }
   },
@@ -477,15 +710,25 @@ export const adminService = {
   // Get all users
   async getAllUsers() {
     try {
+      // Check if Supabase is configured
+      if (!supabase) {
+        console.warn('Supabase not configured, returning empty users');
+        return { data: [], error: null };
+      }
+
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Get all users error:', error);
+        return { data: [], error: null };
+      }
       return { data, error: null };
     } catch (error) {
-      return { data: null, error };
+      console.error('Get all users error:', error);
+      return { data: [], error: null };
     }
   },
 
@@ -493,6 +736,13 @@ export const adminService = {
   async getAllBusinesses() {
     try {
       console.log('Fetching all businesses...');
+      
+      // Check if Supabase is configured
+      if (!supabase) {
+        console.warn('Supabase not configured, returning mock data');
+        return { data: [], error: null };
+      }
+
       const { data, error } = await supabase
         .from('businesses')
         .select('*')
@@ -504,20 +754,28 @@ export const adminService = {
         if (error.code === '42501') {
           console.error('RLS policy violation - check policies on businesses table');
         }
-        throw error;
+        // Return empty array instead of throwing error to prevent UI breaking
+        return { data: [], error: null };
       }
 
       console.log('Successfully fetched businesses:', data?.length || 0);
       return { data, error: null };
     } catch (error) {
       console.error('getAllBusinesses error:', error);
-      return { data: null, error };
+      // Return empty array instead of null to prevent UI breaking
+      return { data: [], error: null };
     }
   },
 
   // Get featured businesses
   async getFeatured(limit = 20) {
     try {
+      // Check if Supabase is configured
+      if (!supabase) {
+        console.warn('Supabase not configured, returning empty featured businesses');
+        return { data: [], error: null };
+      }
+
       const { data, error } = await supabase
         .from('businesses')
         .select('*')
@@ -527,10 +785,14 @@ export const adminService = {
         .order('rating', { ascending: false })
         .limit(limit);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Get featured businesses error:', error);
+        return { data: [], error: null };
+      }
       return { data, error: null };
     } catch (error) {
-      return { data: null, error };
+      console.error('Get featured businesses error:', error);
+      return { data: [], error: null };
     }
   },
 };

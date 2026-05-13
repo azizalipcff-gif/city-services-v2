@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle, Globe } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 
 const Register = () => {
@@ -59,22 +59,43 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    
+    // Validate form first
+    if (!validateForm()) {
+      return;
+    }
 
     setIsLoading(true);
+    setErrors({});
+
     try {
-      const { error } = await signUp(formData.email, formData.password, formData.fullName, formData.role);
+      const { data, error } = await signUp(formData.email, formData.password, formData.fullName, formData.role);
+      
       if (error) {
-        showToast(error.message || 'Registration failed', 'error');
+        // Handle specific error cases
+        if (error.message?.includes('already registered') || error.message?.includes('already exists')) {
+          setErrors({ email: 'This email is already registered. Please sign in instead.' });
+          showToast('This email is already registered. Please sign in instead.', 'error');
+        } else if (error.message?.includes('weak password')) {
+          setErrors({ password: 'Password is too weak. Please choose a stronger password.' });
+          showToast('Password is too weak. Please choose a stronger password.', 'error');
+        } else if (error.message?.includes('invalid email')) {
+          setErrors({ email: 'Please enter a valid email address.' });
+          showToast('Please enter a valid email address.', 'error');
+        } else {
+          showToast(error.message || 'Registration failed', 'error');
+        }
       } else {
-        showToast('Registration successful! Please check your email to verify your account.', 'success');
-        navigate('/login');
+        // Successful registration
+        showToast('Welcome to CityServices! Your account is ready.', 'success');
+        navigate('/');
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'An error occurred';
       showToast(message, 'error');
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleGoogleSignUp = async () => {

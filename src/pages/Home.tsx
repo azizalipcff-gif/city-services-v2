@@ -1,6 +1,5 @@
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
-import Categories from '../components/Categories';
 import FeaturedBusinesses from '../components/FeaturedBusinesses';
 import WhyChooseUs from '../components/WhyChooseUs';
 import Testimonials from '../components/Testimonials';
@@ -12,7 +11,6 @@ const Home = () => {
       <Navbar />
       <main className="flex-1">
         <Hero />
-        <Categories />
         <FeaturedBusinesses />
         <WhyChooseUs />
         <Testimonials />

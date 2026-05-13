@@ -1,8 +1,40 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, MapPin, TrendingUp, Building, ArrowRight } from 'lucide-react';
+import { ArrowRight, Search } from 'lucide-react';
 import { trendingSearches } from '../data/mockData';
+import { useNavigate } from 'react-router-dom';
 
 const Hero = () => {
+  const [query, setQuery] = useState('');
+  const navigate = useNavigate();
+
+  const handleTrendingSearch = (searchTerm: string) => {
+    // Parse the search term to extract city and category
+    const lowerSearch = searchTerm.toLowerCase();
+    
+    if (lowerSearch.includes('oujda')) {
+      navigate('/search?q=oujda');
+    } else if (lowerSearch.includes('wifi')) {
+      navigate('/search?q=wifi');
+    } else if (lowerSearch.includes('mechanic')) {
+      navigate('/search?q=mechanic');
+    } else {
+      navigate(`/search?q=${searchTerm}`);
+    }
+  };
+
+  const handleSearch = () => {
+    if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   return (
     <section id="home" className="relative bg-gradient-to-br from-[#071126] to-[#0a1a2e] text-white min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background animated elements */}
@@ -43,61 +75,29 @@ const Hero = () => {
           Discover the best technicians, restaurants, WiFi services, electricians, repair shops, and local businesses near you.
         </motion.p>
 
-        {/* Enhanced Search Bar */}
+        {/* Search Bar */}
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="max-w-4xl mx-auto mb-8"
+          className="max-w-2xl mx-auto mb-12"
         >
-          <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-2xl">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              {/* Search Services */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search services (e.g., PC Repair)"
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:border-transparent transition-all"
-                />
-              </div>
-
-              {/* Search City */}
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Enter city (e.g., Oujda)"
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:border-transparent transition-all"
-                />
-              </div>
-
-              {/* Search Button */}
-              <button className="bg-[#d4af37] text-[#071126] px-6 py-3 rounded-lg font-semibold hover:bg-[#b8941f] transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-[#d4af37]/25">
-                <Search className="w-5 h-5" />
-                Search
-              </button>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 rounded-lg text-white hover:bg-[#d4af37] hover:text-[#071126] transition-all duration-300 flex items-center justify-center gap-2"
-              >
-                <Building className="w-5 h-5" />
-                Explore Services
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-[#d4af37] text-[#071126] px-6 py-3 rounded-lg font-semibold hover:bg-[#b8941f] transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-[#d4af37]/25"
-              >
-                <TrendingUp className="w-5 h-5" />
-                Add Your Business
-              </motion.button>
-            </div>
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Search businesses, categories, or cities..."
+              className="w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:border-transparent transition-all duration-300"
+            />
+            <button
+              onClick={handleSearch}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#d4af37] text-[#071126] px-4 py-2 rounded-lg hover:bg-[#b8941f] transition-colors"
+            >
+              Search
+            </button>
           </div>
         </motion.div>
 
@@ -139,9 +139,13 @@ const Hero = () => {
             </div>
             <div className="flex flex-wrap gap-3">
               {trendingSearches.map((search) => (
-                <span key={search} className="bg-white/10 text-white px-4 py-2 rounded-full text-sm border border-white/10">
+                <button
+                  key={search}
+                  onClick={() => handleTrendingSearch(search)}
+                  className="bg-white/10 text-white px-4 py-2 rounded-full text-sm border border-white/10 hover:bg-white/20 transition-colors cursor-pointer"
+                >
                   {search}
-                </span>
+                </button>
               ))}
             </div>
           </div>

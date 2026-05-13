@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Menu, X, Search, LogOut } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { Bell, Menu, X, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from './Toast';
+import Notifications from './Notifications';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,7 +27,7 @@ const Navbar = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
-      showToast('Signed out successfully', 'success');
+      showToast('Logged out successfully', 'success');
       navigate('/');
     } catch {
       showToast('Error signing out', 'error');
@@ -89,18 +90,10 @@ const Navbar = () => {
 
           {/* Right Side Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            {/* Search Icon */}
-            <button className="text-white hover:text-[#d4af37] transition-colors p-2">
-              <Search className="w-5 h-5" />
-            </button>
-
             {user ? (
               <>
                 {/* Notifications */}
-                <button className="text-white hover:text-[#d4af37] transition-colors p-2 relative">
-                  <Bell className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
+                <Notifications />
 
                 {/* User Avatar */}
                 <div className="relative">

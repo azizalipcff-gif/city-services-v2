@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { ADMIN_EMAIL } from '../lib/constants';
+import { ADMIN_EMAIL } from "../constants/constants";
 
 export interface UserProfile {
   id: string;
@@ -153,7 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             role: storeRole,
             name,
           },
-          emailRedirectTo: `${window.location.origin}/verify-email`,
+          emailRedirectTo: `${window.location.origin}/`,
         },
       });
 
@@ -169,7 +169,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           verified: false,
         });
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          // Don't throw error for profile creation, user can still be created
+        }
+
+        // Update auth state immediately
+        setUser(data.user);
+        setSession(data.session);
+        await fetchProfile(data.user.id);
       }
 
       return { data, error: null };
@@ -223,7 +231,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    
+    // Clear all user state
+    setUser(null);
+    setSession(null);
     setProfile(null);
+    
+    // Clear local storage
+    localStorage.removeItem('supabase.auth.token');
+    localStorage.removeItem('supabase.auth.refreshToken');
+    localStorage.removeItem('supabase.auth.user');
   };
 
   const resetPassword = async (email: string) => {

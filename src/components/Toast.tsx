@@ -1,2 +1,2 @@
 /* eslint-disable react-refresh/only-export-components */
-export { ToastProvider, useToast } from '../contexts/ToastContext';
+export { ToastProvider, useToast } from "../context/ToastContext";

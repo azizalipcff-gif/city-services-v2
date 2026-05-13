@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { Mail, MapPin, Phone, Send } from 'lucide-react';
+import { Mail, MapPin, Phone, Send, Building2, Shield, Crown } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -75,58 +76,86 @@ const Footer = () => {
             >
               <h3 className="text-lg font-semibold mb-6 text-white">Quick Links</h3>
               <ul className="space-y-3">
-                <li><a href="#home" className="text-gray-300 hover:text-[#d4af37] transition-colors flex items-center group">
+                <li><Link to="/" className="text-gray-300 hover:text-[#d4af37] transition-colors flex items-center group">
                   <span className="w-1.5 h-1.5 bg-[#d4af37] rounded-full mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                   Home
-                </a></li>
-                <li><a href="#categories" className="text-gray-300 hover:text-[#d4af37] transition-colors flex items-center group">
+                </Link></li>
+                <li><Link to="/search" className="text-gray-300 hover:text-[#d4af37] transition-colors flex items-center group">
                   <span className="w-1.5 h-1.5 bg-[#d4af37] rounded-full mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                  Categories
-                </a></li>
-                <li><a href="#businesses" className="text-gray-300 hover:text-[#d4af37] transition-colors flex items-center group">
+                  Search Businesses
+                </Link></li>
+                <li><Link to="/add-business" className="text-gray-300 hover:text-[#d4af37] transition-colors flex items-center group">
                   <span className="w-1.5 h-1.5 bg-[#d4af37] rounded-full mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                  Businesses
-                </a></li>
-                <li><a href="#about" className="text-gray-300 hover:text-[#d4af37] transition-colors flex items-center group">
+                  Add Your Business
+                </Link></li>
+                <li><Link to="/admin-control" className="text-gray-300 hover:text-[#d4af37] transition-colors flex items-center group">
                   <span className="w-1.5 h-1.5 bg-[#d4af37] rounded-full mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                  About Us
-                </a></li>
-                <li><a href="#contact" className="text-gray-300 hover:text-[#d4af37] transition-colors flex items-center group">
+                  Admin Panel
+                </Link></li>
+                <li><Link to="/contact" className="text-gray-300 hover:text-[#d4af37] transition-colors flex items-center group">
                   <span className="w-1.5 h-1.5 bg-[#d4af37] rounded-full mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                   Contact
-                </a></li>
+                </Link></li>
               </ul>
             </motion.div>
 
-            {/* Categories */}
+            {/* Contact Information */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              <h3 className="text-lg font-semibold mb-6 text-white">Categories</h3>
-              <ul className="space-y-3">
-                <li><a href="#" className="text-gray-300 hover:text-[#d4af37] transition-colors flex items-center group">
-                  <span className="w-1.5 h-1.5 bg-[#d4af37] rounded-full mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                  PC Repair
-                </a></li>
-                <li><a href="#" className="text-gray-300 hover:text-[#d4af37] transition-colors flex items-center group">
-                  <span className="w-1.5 h-1.5 bg-[#d4af37] rounded-full mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                  WiFi & Internet
-                </a></li>
-                <li><a href="#" className="text-gray-300 hover:text-[#d4af37] transition-colors flex items-center group">
-                  <span className="w-1.5 h-1.5 bg-[#d4af37] rounded-full mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                  Phone Repair
-                </a></li>
-                <li><a href="#" className="text-gray-300 hover:text-[#d4af37] transition-colors flex items-center group">
-                  <span className="w-1.5 h-1.5 bg-[#d4af37] rounded-full mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                  Restaurants
-                </a></li>
-                <li><a href="#" className="text-gray-300 hover:text-[#d4af37] transition-colors flex items-center group">
-                  <span className="w-1.5 h-1.5 bg-[#d4af37] rounded-full mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                  Electricians
-                </a></li>
-              </ul>
+              <h3 className="text-lg font-semibold mb-6 text-white">Contact Us</h3>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-[#d4af37] mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="text-gray-300">Oujda, Morocco</p>
+                    <p className="text-gray-400 text-sm">Serving local businesses</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <Mail className="w-5 h-5 text-[#d4af37] mt-1 flex-shrink-0" />
+                  <div>
+                    <a 
+                      href="mailto:azizaliyt2ff@gmail.com" 
+                      className="text-gray-300 hover:text-[#d4af37] transition-colors"
+                    >
+                      azizaliyt2ff@gmail.com
+                    </a>
+                    <p className="text-gray-400 text-sm">Support Email</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <Phone className="w-5 h-5 text-[#d4af37] mt-1 flex-shrink-0" />
+                  <div>
+                    <a 
+                      href="tel:0659785764" 
+                      className="text-gray-300 hover:text-[#d4af37] transition-colors"
+                    >
+                      0659785764
+                    </a>
+                    <a 
+                      href="https://wa.me/212659785764" 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-300 hover:text-[#d4af37] transition-colors flex items-center gap-1"
+                    >
+                      <span>WhatsApp</span>
+                    </a>
+                    <p className="text-gray-400 text-sm">Phone/WhatsApp</p>
+                  </div>
+                </div>
+                
+                <div className="pt-4 border-t border-white/10">
+                  <p className="text-gray-400 text-sm mb-3">Business Hours</p>
+                  <p className="text-gray-300 text-sm">Monday - Friday: 9:00 AM - 6:00 PM</p>
+                  <p className="text-gray-300 text-sm">Saturday: 10:00 AM - 4:00 PM</p>
+                  <p className="text-gray-300 text-sm">Sunday: Closed</p>
+                </div>
+              </div>
             </motion.div>
           </div>
 

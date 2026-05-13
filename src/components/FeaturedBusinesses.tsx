@@ -2,10 +2,26 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Star, MapPin, MessageCircle, CheckCircle, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { businessService } from '../lib/businessService';
+import { businessService } from "../services/businessService";
+
+interface Business {
+  id: string;
+  name: string;
+  category: string;
+  city: string;
+  description: string;
+  rating: number;
+  reviews_count: number;
+  approved: boolean;
+  verified: boolean;
+  featured: boolean;
+  image?: string;
+  whatsapp?: string;
+  open?: boolean;
+}
 
 const FeaturedBusinesses = () => {
-  const [businesses, setBusinesses] = useState<any[]>([]);
+  const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,7 +34,7 @@ const FeaturedBusinesses = () => {
         
         const fetchPromise = businessService.getPublic();
         
-        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as { data: Business[] | null; error: any };
         
         if (error) {
           console.error('Error fetching businesses:', error);

@@ -1,10 +1,12 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from "../context/AuthContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: 'user' | 'business' | 'admin';
 }
+
+const ADMIN_EMAIL = 'azizalipcff@gmail.com';
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
   const { user, profile, loading } = useAuth();
@@ -20,19 +22,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
     );
   }
 
-  if (!user || !profile) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole) {
-    if (requiredRole === 'admin' && profile.role !== 'admin') {
+  // Admin route protection - only azizalipcff@gmail.com can access admin routes
+  if (requiredRole === 'admin') {
+    if (!profile || profile.role !== 'admin' || user.email !== ADMIN_EMAIL) {
       return <Navigate to="/" replace />;
     }
-    if (requiredRole === 'business' && profile.role !== 'business') {
-      return <Navigate to={profile.role === 'admin' ? '/admin' : '/user-dashboard'} replace />;
+  }
+
+  if (requiredRole) {
+    if (requiredRole === 'business' && (!profile || profile.role !== 'business')) {
+      return <Navigate to="/user-dashboard" replace />;
     }
-    if (requiredRole === 'user' && profile.role !== 'user') {
-      return <Navigate to={profile.role === 'business' ? '/business-dashboard' : profile.role === 'admin' ? '/admin' : '/login'} replace />;
+    if (requiredRole === 'user' && (!profile || profile.role !== 'user')) {
+      return <Navigate to="/login" replace />;
     }
   }
 
