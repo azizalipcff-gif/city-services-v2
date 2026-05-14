@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Search } from 'lucide-react';
+import { ArrowRight, Search, Plus } from 'lucide-react';
 import { trendingSearches } from '../data/mockData';
 import { useNavigate } from 'react-router-dom';
 
@@ -74,6 +74,29 @@ const Hero = () => {
         >
           Discover the best technicians, restaurants, WiFi services, electricians, repair shops, and local businesses near you.
         </motion.p>
+
+        {/* CTA Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+          className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
+        >
+          <button
+            onClick={() => navigate('/add-business')}
+            className="bg-[#d4af37] text-[#071126] px-8 py-4 rounded-xl font-semibold hover:bg-[#b8941f] transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-[#d4af37]/25"
+          >
+            <Plus className="w-5 h-5" />
+            Add Your Business
+          </button>
+          <button
+            onClick={handleSearch}
+            className="bg-white/10 text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/20 transition-all duration-300 flex items-center justify-center gap-2 border border-white/20"
+          >
+            <Search className="w-5 h-5" />
+            Browse Services
+          </button>
+        </motion.div>
 
         {/* Search Bar */}
         <motion.div

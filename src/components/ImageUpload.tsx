@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { Upload, X, Image as ImageIcon, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, AlertCircle, CheckCircle, Loader2, Camera } from 'lucide-react';
 
 interface ImageUploadProps {
   type: 'logo' | 'cover' | 'gallery';
@@ -30,6 +30,7 @@ const ImageUpload = ({
   const [error, setError] = useState('');
   const [previewImages, setPreviewImages] = useState<string[]>(existingImages);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const compressImage = useCallback(async (file: File, quality: number = 0.8): Promise<Blob> => {
     return new Promise((resolve, reject) => {
@@ -262,8 +263,7 @@ const ImageUpload = ({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-          className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+          className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all ${
             isDragging
               ? 'border-[#d4af37] bg-[#d4af37]/10'
               : 'border-white/20 hover:border-[#d4af37]/50 hover:bg-white/5'
@@ -275,6 +275,15 @@ const ImageUpload = ({
             accept={acceptedTypes.join(',')}
             onChange={handleInputChange}
             className="hidden"
+            multiple={type === 'gallery'}
+          />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept={acceptedTypes.join(',')}
+            onChange={handleInputChange}
+            className="hidden"
+            capture="environment"
             multiple={type === 'gallery'}
           />
 
@@ -296,8 +305,31 @@ const ImageUpload = ({
                 <p className="text-white font-semibold">{getUploadAreaText()}</p>
                 <p className="text-gray-400 text-sm mt-1">{getUploadAreaDescription()}</p>
               </div>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  className="px-4 py-2 bg-[#d4af37] hover:bg-[#b8941f] text-[#071126] rounded-lg font-medium transition-colors"
+                >
+                  Browse Files
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    cameraInputRef.current?.click();
+                  }}
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <Camera className="w-4 h-4" />
+                  Take Photo
+                </button>
+              </div>
               <p className="text-gray-500 text-xs">
-                Drag and drop or click to browse
+                Drag and drop or use buttons above
               </p>
             </div>
           )}

@@ -11,6 +11,7 @@ const Login = lazy(() => import('./auth/Login'));
 const Register = lazy(() => import('./auth/Register'));
 const ForgotPassword = lazy(() => import('./auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('./auth/ResetPassword'));
+const AddBusiness = lazy(() => import('./pages/AddBusiness'));
 const UserDashboard = lazy(() => import('./dashboard/UserDashboard'));
 const BusinessDashboard = lazy(() => import('./business/BusinessDashboard'));
 const BusinessManagement = lazy(() => import('./business/BusinessManagement'));
@@ -45,6 +46,14 @@ function App() {
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/search" element={<SearchResults />} />
                   <Route path="/business/:id" element={<BusinessDetails />} />
+                  <Route
+                    path="/add-business"
+                    element={
+                      <ProtectedRoute requiredRole="user">
+                        <AddBusiness />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/admin"
                     element={

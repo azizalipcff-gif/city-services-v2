@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
   Building2,
   Upload,
@@ -8,26 +9,18 @@ import {
   MapPin,
   Clock,
   Phone,
-  Mail,
-  Globe,
-  Facebook,
-  Instagram,
   Plus,
   X,
-  Camera,
   Star,
-  DollarSign,
   Save,
   Trash2,
   ChevronRight,
-  Calendar,
   Wifi,
   Zap,
   Wrench,
   Coffee,
   Shield,
   Crown,
-  TrendingUp,
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -83,6 +76,7 @@ interface WorkingHours {
 const AddBusiness = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const [currentSection, setCurrentSection] = useState(0);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<BusinessFormData>>({});
@@ -303,11 +297,38 @@ const AddBusiness = () => {
     setLoading(true);
 
     try {
+      // Map form data to Business type structure
       const businessData = {
-        ...formData,
         owner_id: user.id,
-        approved: false, // Businesses need admin approval
-        created_at: new Date().toISOString(),
+        name: formData.name,
+        slug: formData.slug,
+        description: formData.fullDescription,
+        category: formData.category,
+        city: formData.city,
+        address: formData.neighborhood,
+        phone: formData.phone,
+        whatsapp: formData.whatsapp || null,
+        email: formData.email || null,
+        website: formData.website || null,
+        logo_url: formData.logoUrl || null,
+        cover_url: formData.coverUrl || null,
+        gallery_urls: formData.galleryUrls.length > 0 ? formData.galleryUrls : null,
+        rating: 0,
+        reviews_count: 0,
+        verified: false,
+        featured: false,
+        approved: false,
+        price_range: '$$' as const,
+        coordinates_lat: formData.latitude || null,
+        coordinates_lng: formData.longitude || null,
+        social_facebook: formData.facebook || null,
+        social_instagram: formData.instagram || null,
+        opening_hours: Object.entries(formData.workingHours)
+          .filter(([_, hours]) => !(hours as any).closed)
+          .map(([day, hours]) => ({
+            day: day.charAt(0).toUpperCase() + day.slice(1),
+            hours: `${(hours as any).open} - ${(hours as any).close}`,
+          })),
       };
 
       const { data, error } = await businessService.create(businessData, user.id);
@@ -360,10 +381,10 @@ const AddBusiness = () => {
               </div>
             </div>
             <button
-              onClick={() => window.location.href = '/'}
+              onClick={() => navigate('/user-dashboard')}
               className="w-full bg-[#d4af37] hover:bg-[#b8941f] text-[#071126] font-semibold py-4 px-6 rounded-xl transition-all transform hover:scale-105"
             >
-              Back to Home
+              Go to Dashboard
             </button>
           </div>
         </motion.div>
